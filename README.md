@@ -1,8 +1,8 @@
-# PCF FluentUI Autocomple Boilerplate.
+# PCF FluentUI Autocomplete Boilerplate.
 
-Dynamics365 / PowerApps PCF Control boilerplate to create a Dynamic lookup from any api source. This is a boilerplate only and you will need to edit the api endpoint to a data point of your choosing.  The API I have used in this example will need an api key before it will work, but this is designed to give you an example.
+PCF FluentUI Autocomplete to create a dynamic lookup from any API source. This is a boilerplate only and you will need to edit the API endpoint to a data point of your choosing.  The API I have used in this example will need an API key before it will work, but this is designed to give you an example.
 
-The object of the project was to have a dynamic api lookup built on React and is styled to replicate out of the box components from Microsoft. 
+The object of the project was to have a dynamic API lookup built on React and is styled to replicate out of the box components from Microsoft. 
 
 This example has alot of console.debug values being pumped out, feel free to remove these for your production component.
 
