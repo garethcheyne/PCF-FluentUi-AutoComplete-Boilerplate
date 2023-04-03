@@ -14,5 +14,4 @@
 /obj
 /.vscode
 /Solution
-
-creds.yaml
+/test
