@@ -41,7 +41,7 @@ export class PCFFluentUiAutoComplete implements ComponentFramework.StandardContr
 		this._props.context = context;
 		this._props.isDisabled = context.mode.isControlDisabled;
 		//this._props.apiToken = context.parameters.apiToken.raw || ""  // Uncomment for production use.
-		this._props.apiToken = "5c5fa4d5d0974c61906cd5c1f9f2f4f3" // Testing Only remove for production, NB this token has been destroyed.
+		this._props.apiToken = "993dae37883a4339908d090741a73568" // Testing Only remove for production, NB this token has been destroyed.
 
 		this._props.value = context.parameters.value.raw || ""
 

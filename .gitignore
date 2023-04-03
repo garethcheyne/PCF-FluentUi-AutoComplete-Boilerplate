@@ -14,3 +14,5 @@
 /obj
 /.vscode
 /Solution
+
+creds.yaml
