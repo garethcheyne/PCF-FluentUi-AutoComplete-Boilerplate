@@ -1,19 +1,19 @@
 # PCF FluentUI Autocomple Boilerplate.
 
-Dynamics365 / PowerApps PCF Control boilerplate to create a Dynamics lookup from an api source. This is a boilerplate only and you will need to edit the api endpoint to a data point of you choosing.  The API I have used in this example will need an api key before it will work, but this is designed to give you an example.
+Dynamics365 / PowerApps PCF Control boilerplate to create a Dynamic lookup from any api source. This is a boilerplate only and you will need to edit the api endpoint to a data point of your choosing.  The API I have used in this example will need an api key before it will work, but this is designed to give you an example.
 
-The object of the project was to have a dynamics api lookup built on React and is styled to replicate out of the box components from Microsoft. 
+The object of the project was to have a dynamic api lookup built on React and is styled to replicate out of the box components from Microsoft. 
 
-This example has alot of console.debug value being pumped out, feel free to remove these fore your production component.
+This example has alot of console.debug values being pumped out, feel free to remove these for your production component.
 
 ![](./PCFFluentUiAutoComplete/img/preview.png)
 
 ---
 
-## How to optain a NZBN Api Key for this project as is.
+## How to obtain an NZBN Api Key for this project as is.
 You will need to obtain a token from the [https://api.business.govt.nz](https://api.business.govt.nz) first.
 
-The auto complete will populate only the primary bound field, it is expected that you build this project out to fix you needs., but feel free to extend this to your needs, personally I only store a minimum about of data using this PCF control, and the rest of the data is populated nightly via a MS Flow that check the status of all companies stored in our Dynamics Instance.
+The auto complete will populate only the primary bound field, it is expected that you build this project out to fit your needs, personally I only store a minimum amount of data using this PCF control, and the rest of the data is populated nightly via a MS Flow that check the status of all companies stored in our Dynamics Instance.
 
 ---
 
