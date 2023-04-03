@@ -11,7 +11,9 @@ This example has alot of console.debug value being pumped out, feel free to remo
 ---
 
 ## How to optain a NZBN Api Key for this project as is.
-TBA
+You will need to obtain a token from the [https://api.business.govt.nz](https://api.business.govt.nz) first.
+
+The auto complete will populate only the primary bound field, it is expected that you build this project out to fix you needs., but feel free to extend this to your needs, personally I only store a minimum about of data using this PCF control, and the rest of the data is populated nightly via a MS Flow that check the status of all companies stored in our Dynamics Instance.
 ---
 
 ## ToDo List
@@ -29,7 +31,7 @@ TBA
 ---
 
 ### Disclaimer
-#### THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
 AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
