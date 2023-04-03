@@ -26,7 +26,7 @@
   "dependencies": {
     "@fluentui/example-data": "^8.2.8",
     "@fluentui/react": "^7.109.1",
-    "@pnp/spfx-controls-react": "^3.4.1",
+    "@pnp/spfx-controls-react": "^3.13.0",
     "axios": "^0.24.0",
     "moment": "^2.29.4",
     "react-moment": "^1.1.3"

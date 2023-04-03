@@ -8,10 +8,8 @@ import { TooltipHost, ITooltipHostStyles } from '@fluentui/react/lib/Tooltip';
 import { IIconProps } from '@fluentui/react/lib/Icon';
 import { mergeStyleSets, getTheme, getFocusStyle, ITheme } from '@fluentui/react/lib/Styling';
 import { ActionButton } from '@fluentui/react/lib/Button';
-import { SearchBox, Stack, IStackTokens, Icon, FontWeights, DirectionalHint, TooltipDelay } from '@fluentui/react'
-import { initializeIcons } from '@uifabric/icons';
-import { ThemeProvider } from "@uifabric/foundation";
-
+import { ThemeProvider, SearchBox, Stack, IStackTokens, Icon, FontWeights, DirectionalHint, TooltipDelay } from '@fluentui/react';
+import { initializeIcons } from '@fluentui/react/lib/Icons';
 
 // Initialize icons in case this example uses them
 initializeIcons();
@@ -457,6 +455,7 @@ export const FluentUIAutoComplete: React.FunctionComponent<FluentUIAutoCompleteP
                             onChange={evt => getSuggestions(evt?.target.value)}
                             iconProps={searchIcon}
                             onClear={onClear}
+                            disabled={props.isDisabled}
                             // onBlur={onClear}
                             className={style.searchBox}
                         ></SearchBox>
