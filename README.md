@@ -26,6 +26,7 @@ The auto complete will populate only the primary bound field, it is expected tha
 
 ## Change Log
 - 04/04/23 - Added is disabled to SearchBox props & updated FabricUi packages.
+- 04/04/23 - Amended CSS for focusZoneContainer to include zIndex: 9 to overlay from other components.
 
 ## Depercated PCF Controls.
 [PCF-NZPost-AutoComplete](https://github.com/garethcheyne/PCF-NZPost-AutoComplete)

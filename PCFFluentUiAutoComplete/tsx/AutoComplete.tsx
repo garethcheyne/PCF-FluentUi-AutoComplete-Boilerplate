@@ -56,6 +56,7 @@ const style = mergeStyleSets({
         boxShadow: '2px 2px 8px rgb(245 ,245, 245);',
         borderRadius: '4px',
         flexGrow: 1,
+        zIndex: 9
     },
 
     focusZoneContent: {
@@ -456,6 +457,7 @@ export const FluentUIAutoComplete: React.FunctionComponent<FluentUIAutoCompleteP
                             iconProps={searchIcon}
                             onClear={onClear}
                             disabled={props.isDisabled}
+                            // showIcon={}
                             // onBlur={onClear}
                             className={style.searchBox}
                         ></SearchBox>
