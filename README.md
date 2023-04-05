@@ -15,10 +15,12 @@ You will need to obtain a token from the [https://api.business.govt.nz](https://
 
 The auto complete will populate only the primary bound field, it is expected that you build this project out to fit your needs, personally I only store a minimum amount of data using this PCF control, and the rest of the data is populated nightly via a MS Flow that check the status of all companies stored in our Dynamics Instance.
 
+This is intended to be a community driven project, so any suggestion are welcome.
+
 ---
 
 ## ToDo List
-- [ ] Fix issue with multipul re-draws
+- [x] Fix issue with multipul re-draws
 - [ ] Fix issue with clear function, works but need to hit twice.
 - [ ] Fix CSS for animated underline (anyone one know how to do this let me know, not a css expert.)
 
@@ -27,6 +29,7 @@ The auto complete will populate only the primary bound field, it is expected tha
 ## Change Log
 - 04/04/23 - Added is disabled to SearchBox props & updated FabricUi packages.
 - 04/04/23 - Amended CSS for focusZoneContainer to include zIndex: 9 to overlay from other components.
+- 06/04/23 - Add a debounce feature to limit api calls while typing. NB i have probably over complicated this.
 
 ## Depercated PCF Controls.
 [PCF-NZPost-AutoComplete](https://github.com/garethcheyne/PCF-NZPost-AutoComplete)

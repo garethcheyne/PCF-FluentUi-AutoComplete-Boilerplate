@@ -1,8 +1,10 @@
 import * as React from 'react';
 import * as moment from 'moment';
 import axios from 'axios';
-import { IInputs } from "../generated/ManifestTypes";
-import { useState, useRef, useEffect } from 'react';
+import useDebounce from '../tsx/debounce';
+
+import { IInputs } from '../generated/ManifestTypes';
+import { useState, useRef, useEffect, ChangeEvent } from 'react';
 import { FocusZone, FocusZoneDirection } from '@fluentui/react/lib/FocusZone';
 import { TooltipHost, ITooltipHostStyles } from '@fluentui/react/lib/Tooltip';
 import { IIconProps } from '@fluentui/react/lib/Icon';
@@ -10,6 +12,9 @@ import { mergeStyleSets, getTheme, getFocusStyle, ITheme } from '@fluentui/react
 import { ActionButton } from '@fluentui/react/lib/Button';
 import { ThemeProvider, SearchBox, Stack, IStackTokens, Icon, FontWeights, DirectionalHint, TooltipDelay } from '@fluentui/react';
 import { initializeIcons } from '@fluentui/react/lib/Icons';
+
+
+
 
 // Initialize icons in case this example uses them
 initializeIcons();
@@ -276,16 +281,11 @@ export interface FluentUIAutoCompleteProps {
 }
 
 
-
 export const FluentUIAutoComplete: React.FunctionComponent<FluentUIAutoCompleteProps> = (props): JSX.Element => {
 
     console.debug("PCF FluentUI AutoComplete - FluentUIAutoComplete Start")
 
-    const valueRef = useRef("")
-
     // For focusZone dropdown
-
-    const searchboxRef = useRef<HTMLDivElement>(null);
     const [searhboxWidth, setSearhboxWidth] = useState<number | undefined>();
     const [suggestions, setSuggestions] = useState([])
 
@@ -294,7 +294,7 @@ export const FluentUIAutoComplete: React.FunctionComponent<FluentUIAutoCompleteP
         if (typeof w == 'number') {
             w = w - 2
         }
-        console.debug(`PCF FluentUI AutoComplete getWidth w:${w}`)
+        console.debug(`PCF FluentUI AutoComplete - getWidth w:${w}`)
         setSearhboxWidth(w)
     }
 
@@ -302,26 +302,50 @@ export const FluentUIAutoComplete: React.FunctionComponent<FluentUIAutoCompleteP
         getWidth()
     }, [])
 
-    function handelChange(value: string) {
-        valueRef.current = value;
-        console.debug("PCF FluentUI AutoComplete - setRef value: ", valueRef.current)
+    // Section - Components for Search Function
+    // NB I have probably over complicated this, but the idea was to introduce a debounce 
+    // function to handel keyup and limit api calls to 500ms
+
+    const [searchValue, setSearchValue] = useState<string>('');
+    const searchboxRef = useRef<HTMLDivElement>(null);
+    const currentValue = useRef<string>("");
+    const debouncedValue = useDebounce<string>(searchValue, 500);
+
+    const handelCurrentValue = (value: string) => {
+        currentValue.current = value
     }
+
+    const handelSearch = (evt: ChangeEvent<HTMLInputElement> | undefined) => {
+
+        console.debug("PCF FluentUI AutoComplete - handelSearch value:", evt?.target.value)
+
+        if (evt != undefined) {
+            handelCurrentValue(evt.target.value)
+            setSearchValue(evt.target.value)
+        }
+    }
+
+    useEffect(() => {
+        getSuggestions(searchValue)
+    }, [debouncedValue])
+
+    // End Section
+
 
     console.debug("PCF FluentUI AutoComplete - props.context.parameters.value: ", props.context?.parameters.value.raw)
 
-    if (valueRef.current == "") { handelChange(props.value || "") }
+    if (currentValue.current == "") { handelCurrentValue(props.value || "") }
 
     const onClear = () => {
         console.debug("PCF FluentUI AutoComplete - getClear")
         props.updateValue("")
-        handelChange("")
+        handelCurrentValue("")
         setSuggestions([])
-        // props.updateValue("")
     }
 
     const onSelect = (item: any) => {
         console.debug("PCF FluentUI AutoComplete - getSelect")
-        handelChange(item.entityName)
+        handelCurrentValue(item.entityName)
         getDetail(item.nzbn) // Get and Set full details of the NZBN entity
     }
 
@@ -379,18 +403,18 @@ export const FluentUIAutoComplete: React.FunctionComponent<FluentUIAutoCompleteP
     }
 
     // ------------ API Call to get Suggestion
-    const getSuggestions = async (searchTerm: string | undefined) => {
+    const getSuggestions = async (searchTerm: string) => {
         // Get suggestion form the api.business.govt.nz serarch service, and return the results.
         // In this example the API return a JSON object with .data.items, so you will need to change the 
         // script below to handel your chosen API's response.
 
-        handelChange(searchTerm || "")
+        // handelChange(searchTerm || "")
 
-        let suggestionURI = `https://api.business.govt.nz/sandbox/nzbn/v5/entities?page-size=35&search-term=${encodeURI(valueRef.current?.toLocaleLowerCase())}`
+        let suggestionURI = `https://api.business.govt.nz/sandbox/nzbn/v5/entities?page-size=35&search-term=${encodeURI(searchTerm.toLocaleLowerCase())}`
 
-        console.debug("PCF FluentUI AutoComplete - getSuggestion value: ", valueRef.current, valueRef.current.length)
+        console.debug("PCF FluentUI AutoComplete - getSuggestion value: ", searchTerm)
 
-        if (valueRef.current.length >= 3) {
+        if (searchTerm.length >= 3) {
             console.debug("PCF FluentUI AutoComplete - getSuggestion searching")
 
             const response = await axios.get(suggestionURI, {
@@ -452,8 +476,9 @@ export const FluentUIAutoComplete: React.FunctionComponent<FluentUIAutoCompleteP
                     >
                         <SearchBox
                             placeholder="---"
-                            value={valueRef.current}
-                            onChange={evt => getSuggestions(evt?.target.value)}
+                            value={currentValue.current}
+                            // onChange={evt => getSuggestions(evt?.target.value)}
+                            onChange={handelSearch}
                             iconProps={searchIcon}
                             onClear={onClear}
                             disabled={props.isDisabled}
@@ -503,7 +528,7 @@ export const FluentUIAutoComplete: React.FunctionComponent<FluentUIAutoCompleteP
                             <ActionButton
                                 className={style.focusZoneBtn}
                                 iconProps={dropBtnOne}
-                                href={`https://www.nzbn.govt.nz/mynzbn/search/${encodeURI(valueRef.current)}/`} target="_blank">
+                                href={`https://www.nzbn.govt.nz/mynzbn/search/${encodeURI(currentValue.current)}/`} target="_blank">
                                 NZBN Website</ActionButton>
                         </div>
 
@@ -511,7 +536,7 @@ export const FluentUIAutoComplete: React.FunctionComponent<FluentUIAutoCompleteP
                             <ActionButton
                                 className={style.focusZoneBtn}
                                 iconProps={dropBtnTwo}
-                                href={`https://app.companiesoffice.govt.nz/companies/app/ui/pages/companies/search?q=${encodeURI(valueRef.current)}&entityTypes=ALL&entityStatusGroups=ALL&incorpFrom=&incorpTo=&addressTypes=ALL&addressKeyword=&start=0&limit=15&sf=&sd=&advancedPanel=false&mode=standard#results`} target="_blank">
+                                href={`https://app.companiesoffice.govt.nz/companies/app/ui/pages/companies/search?q=${encodeURI(currentValue.current)}&entityTypes=ALL&entityStatusGroups=ALL&incorpFrom=&incorpTo=&addressTypes=ALL&addressKeyword=&start=0&limit=15&sf=&sd=&advancedPanel=false&mode=standard#results`} target="_blank">
                                 Companies Website</ActionButton>
                         </div>
                         {/* End of Section */}
