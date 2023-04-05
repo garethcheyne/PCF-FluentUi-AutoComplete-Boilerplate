@@ -477,7 +477,6 @@ export const FluentUIAutoComplete: React.FunctionComponent<FluentUIAutoCompleteP
                         <SearchBox
                             placeholder="---"
                             value={currentValue.current}
-                            // onChange={evt => getSuggestions(evt?.target.value)}
                             onChange={handelSearch}
                             iconProps={searchIcon}
                             onClear={onClear}
