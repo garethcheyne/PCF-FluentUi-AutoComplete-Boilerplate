@@ -1,8 +1,7 @@
 import * as React from 'react';
 import * as moment from 'moment';
 import axios from 'axios';
-import useDebounce from '../tsx/debounce';
-
+import { useDebounce } from 'usehooks-ts'
 import { IInputs } from '../generated/ManifestTypes';
 import { useState, useRef, useEffect, ChangeEvent } from 'react';
 import { FocusZone, FocusZoneDirection } from '@fluentui/react/lib/FocusZone';
