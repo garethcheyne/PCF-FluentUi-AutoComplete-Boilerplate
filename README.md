@@ -27,10 +27,14 @@ This is intended to be a community driven project, so any suggestion are welcome
 ---
 
 ## Change Log
+- 14/04/23 - Rearranged control and placed suggestion inside the affect hos on the debounceValue change. Also fixed issue with wiping values. 
+- 11/04/23 - Added useHocks-ts lib to project. [Link](https://www.npmjs.com/package/usehooks-ts)
+- 06/04/23 - Added a debounce feature to limit api calls while typing. NB I have probably over complicated this.
 - 04/04/23 - Added is disabled to SearchBox props & updated FabricUi packages.
 - 04/04/23 - Amended CSS for focusZoneContainer to include zIndex: 9 to overlay from other components.
-- 06/04/23 - Add a debounce feature to limit api calls while typing. NB I have probably over complicated this.
-- 11/04/23 - Added useHocks-ts lib to project. [Link](https://www.npmjs.com/package/usehooks-ts)
+
+
+
 
 ## Depercated PCF Controls.
 [PCF-NZPost-AutoComplete](https://github.com/garethcheyne/PCF-NZPost-AutoComplete)
