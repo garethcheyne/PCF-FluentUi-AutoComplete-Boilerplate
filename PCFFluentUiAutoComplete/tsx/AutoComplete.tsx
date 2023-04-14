@@ -9,10 +9,9 @@ import { TooltipHost, ITooltipHostStyles } from '@fluentui/react/lib/Tooltip';
 import { IIconProps } from '@fluentui/react/lib/Icon';
 import { mergeStyleSets, getTheme, getFocusStyle, ITheme } from '@fluentui/react/lib/Styling';
 import { ActionButton } from '@fluentui/react/lib/Button';
-import { ThemeProvider, SearchBox, Stack, IStackTokens, Icon, FontWeights, DirectionalHint, TooltipDelay } from '@fluentui/react';
+import { ThemeProvider, SearchBox, Stack, IStackTokens, Icon, FontWeights, DirectionalHint, TooltipDelay, Label } from '@fluentui/react';
 import { initializeIcons } from '@fluentui/react/lib/Icons';
-
-
+import { Spinner, SpinnerSize } from '@fluentui/react/lib/Spinner';
 
 // Initialize icons in case this example uses them
 initializeIcons();
@@ -51,7 +50,6 @@ const style = mergeStyleSets({
     stackContainer: {
         position: 'relative'
     },
-
     focusZoneContainer: {
         position: 'absolute',
         marginTop: '2px !important',
@@ -61,7 +59,6 @@ const style = mergeStyleSets({
         flexGrow: 1,
         zIndex: 9,
     },
-
     focusZoneContent: {
         overflow: 'hidden',
         backgroundColor: '#fff',
@@ -95,17 +92,15 @@ const style = mergeStyleSets({
         height: '32px',
         padding: '2px 2px',
     },
-
     focusZoneHeaderContent: {
         fontSize: '14px',
         textAlign: 'left',
-        padding: '8px 10px',
+        padding: '0px 6px',
         top: '50%',
         width: '100%',
         backgroundColor: '#fafaFA',
         borderRadius: '4px',
     },
-
     focusZoneFooter: {
         backgroundColor: '#FFF',
         borderTop: `1px solid ${palette.neutralTertiary}`,
@@ -162,7 +157,6 @@ const style = mergeStyleSets({
             },
         },
     },
-
     focusZoneWebIcon: {
         display: 'block',
         cursor: 'pointer',
@@ -185,7 +179,6 @@ const style = mergeStyleSets({
         display: 'block',
         marginTop: 20,
     },
-
     // CSS for Focurs Items
     itemContainer: [
 
@@ -305,6 +298,7 @@ export const FluentUIAutoComplete: React.FunctionComponent<FluentUIAutoCompleteP
     const [value, setValue] = useState<string>(props.value || "");
     const [selected, setSelected] = useState<boolean>(true);
     const [suggestions, setSuggestions] = useState([])
+    const [isLoading, setIsLoading] = useState<boolean>(false);
 
     const searchboxRef = useRef<HTMLDivElement>(null);
     const debouncedValue = useDebounce<string>(value, 500);
@@ -312,6 +306,7 @@ export const FluentUIAutoComplete: React.FunctionComponent<FluentUIAutoCompleteP
     const handelSearch = (evt: ChangeEvent<HTMLInputElement> | undefined) => {
         console.debug("PCF FluentUI AutoComplete - handelSearch value:", evt?.target.value)
         if (evt != undefined) {
+            setIsLoading(true)
             setSelected(false)
             setValue(evt.target.value)
         }
@@ -337,6 +332,7 @@ export const FluentUIAutoComplete: React.FunctionComponent<FluentUIAutoCompleteP
             if (response.status == 200) {
                 console.debug("PCF FluentUI AutoComplete - fetchSuggestions response: ", response.data.items)
                 setSuggestions(response.data.items)
+                setIsLoading(false)
             }
         }
 
@@ -344,12 +340,14 @@ export const FluentUIAutoComplete: React.FunctionComponent<FluentUIAutoCompleteP
         if (selected == false && debouncedValue.length > 2) {
             fetchSuggestions()
         }
-
+        else {
+            setSuggestions([])
+            setIsLoading(false)
+        }
         // Check that containter has not changes size.
         getInputWidth()
 
-    }, [debouncedValue])
-
+    }, [debouncedValue, isLoading])
 
     const onClear = () => {
         console.debug("PCF FluentUI AutoComplete - getClear")
@@ -371,6 +369,17 @@ export const FluentUIAutoComplete: React.FunctionComponent<FluentUIAutoCompleteP
 
     const openWebsite = (url: string) => {
         window.open(url, "_blank")
+    }
+
+    const spinner = (): JSX.Element => {
+        return (
+            <div className={style.focusZoneHeaderContent}>
+                <Spinner
+                    size={SpinnerSize.large}
+                    labelPosition="left"
+                    label="Waiting on results..." />
+            </div>
+        )
     }
 
     const renderDropdown = (item: any, index: number): JSX.Element => {
@@ -473,9 +482,13 @@ export const FluentUIAutoComplete: React.FunctionComponent<FluentUIAutoCompleteP
                 </ThemeProvider >
             </div>
 
+
             {/* FocusZone Section/Dropdown */}
 
+
+
             {suggestions.length > 0 &&
+
                 <FocusZone
                     direction={FocusZoneDirection.vertical}
                     className={style.focusZoneContainer}
@@ -483,9 +496,15 @@ export const FluentUIAutoComplete: React.FunctionComponent<FluentUIAutoCompleteP
 
                     {/* Header Section of Focus Zone */}
                     <div className={style.focusZoneHeader}>
-                        <div className={style.focusZoneHeaderContent}>
-                            Search Results...
-                        </div>
+
+                        {!isLoading &&
+                            <div className={style.focusZoneHeaderContent}>
+                                <Label>Search Results</Label>
+                            </div>
+                        }
+
+                        {isLoading && spinner()}
+
                     </div>
                     {/* End of Section  */}
 
@@ -494,7 +513,7 @@ export const FluentUIAutoComplete: React.FunctionComponent<FluentUIAutoCompleteP
                         className={style.focusZoneContent}
                         data-is-scrollable>
 
-                        {suggestions.map((suggestion, i) =>
+                        {!isLoading && suggestions.map((suggestion, i) =>
                             renderDropdown(suggestion, i)
                         )}
 

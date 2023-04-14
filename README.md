@@ -21,12 +21,13 @@ This is intended to be a community driven project, so any suggestion are welcome
 
 ## ToDo List
 - [x] Fix issue with multipul re-draws
-- [ ] Fix issue with clear function, works but need to hit twice.
+- [x] Fix issue with clear function, works but need to hit twice.
 - [ ] Fix CSS for animated underline (anyone one know how to do this let me know, not a css expert.)
 
 ---
 
 ## Change Log
+- 14/04/23 - Added loading spinner to search results, this will show your user if the component is still awaiting on the API to respond.
 - 14/04/23 - Rearranged control and placed suggestion inside the affect hos on the debounceValue change. Also fixed issue with wiping values. 
 - 11/04/23 - Added useHocks-ts lib to project. [Link](https://www.npmjs.com/package/usehooks-ts)
 - 06/04/23 - Added a debounce feature to limit api calls while typing. NB I have probably over complicated this.
