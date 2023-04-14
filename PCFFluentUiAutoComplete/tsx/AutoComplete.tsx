@@ -532,7 +532,7 @@ export const FluentUIAutoComplete: React.FunctionComponent<FluentUIAutoCompleteP
                                 className={style.focusZoneBtn}
                                 iconProps={dropBtnOne}
                                 href={`https://www.nzbn.govt.nz/mynzbn/search/${encodeURI(value)}/`} target="_blank">
-                                NZBN Website</ActionButton>
+                                <Label>NZBN Website</Label></ActionButton>
                         </div>
 
                         <div className={style.focusZoneFooterRight}>
@@ -540,7 +540,7 @@ export const FluentUIAutoComplete: React.FunctionComponent<FluentUIAutoCompleteP
                                 className={style.focusZoneBtn}
                                 iconProps={dropBtnTwo}
                                 href={`https://app.companiesoffice.govt.nz/companies/app/ui/pages/companies/search?q=${encodeURI(value)}&entityTypes=ALL&entityStatusGroups=ALL&incorpFrom=&incorpTo=&addressTypes=ALL&addressKeyword=&start=0&limit=15&sf=&sd=&advancedPanel=false&mode=standard#results`} target="_blank">
-                                Companies Website</ActionButton>
+                                <Label>Companies Website</Label></ActionButton>
                         </div>
                         {/* End of Section */}
                     </div>
