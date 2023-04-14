@@ -296,18 +296,18 @@ export const FluentUIAutoComplete: React.FunctionComponent<FluentUIAutoCompleteP
     // NB I have probably over complicated this, but the idea was to introduce a debounce 
     // function to handel keyup and limit api calls to 500ms
     const [value, setValue] = useState<string>(props.value || "");
-    const [selected, setSelected] = useState<boolean>(true);
     const [suggestions, setSuggestions] = useState([])
-    const [isLoading, setIsLoading] = useState<boolean>(false);
 
+    const isLoading = useRef<boolean>(false);
+    const isSelected = useRef<boolean>(true);
     const searchboxRef = useRef<HTMLDivElement>(null);
     const debouncedValue = useDebounce<string>(value, 500);
 
     const handelSearch = (evt: ChangeEvent<HTMLInputElement> | undefined) => {
         console.debug("PCF FluentUI AutoComplete - handelSearch value:", evt?.target.value)
         if (evt != undefined) {
-            setIsLoading(true)
-            setSelected(false)
+            isLoading.current = true
+            isSelected.current = false
             setValue(evt.target.value)
         }
     }
@@ -331,19 +331,23 @@ export const FluentUIAutoComplete: React.FunctionComponent<FluentUIAutoCompleteP
 
             if (response.status == 200) {
                 console.debug("PCF FluentUI AutoComplete - fetchSuggestions response: ", response.data.items)
+                isLoading.current = false
                 setSuggestions(response.data.items)
-                setIsLoading(false)
             }
         }
 
         // Check that value is greater than 2 char before calling the api and does not match current value
-        if (selected == false && debouncedValue.length > 2) {
+        if (isSelected.current == false && debouncedValue.length > 2) {
+            isLoading.current = true
+            setSuggestions([])
             fetchSuggestions()
         }
         else {
+            isLoading.current = false
             setSuggestions([])
-            setIsLoading(false)
+
         }
+
         // Check that containter has not changes size.
         getInputWidth()
 
@@ -361,7 +365,7 @@ export const FluentUIAutoComplete: React.FunctionComponent<FluentUIAutoCompleteP
     const onSelect = (item: any) => {
         if (item != "" && item != undefined) {
             console.debug("PCF FluentUI AutoComplete - getSelect")
-            setSelected(true)
+            isSelected.current = true
             setValue(item.entityName)
             getDetail(item.nzbn) // Get and Set full details of the NZBN entity
         }
@@ -482,10 +486,7 @@ export const FluentUIAutoComplete: React.FunctionComponent<FluentUIAutoCompleteP
                 </ThemeProvider >
             </div>
 
-
             {/* FocusZone Section/Dropdown */}
-
-
 
             {suggestions.length > 0 &&
 
