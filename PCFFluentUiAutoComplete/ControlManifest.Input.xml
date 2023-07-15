@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <manifest>
-  <control namespace="GC" constructor="PCFFluentUiAutoComplete" version="0.0.26" display-name-key="PCF FluentUi AutoComplete" description-key="This is designed to be used as a boilerplate for an auto complete using React and FluentUI. You will need to edit this project for your intended use." control-type="standard" preview-image="img/preview.png">
+  <control namespace="GC" constructor="PCFFluentUiAutoComplete" version="0.0.27" display-name-key="PCF FluentUi AutoComplete" description-key="This is designed to be used as a boilerplate for an auto complete using React and FluentUI. You will need to edit this project for your intended use." control-type="standard" preview-image="img/preview.png">
     <property name="value" display-name-key="Value" description-key="Value" of-type="SingleLine.Text" usage="bound" required="true" />
     <property name="apiToken" display-name-key="API Token" description-key="API Token" of-type="SingleLine.Text" usage="input" required="true" />
     <resources>
