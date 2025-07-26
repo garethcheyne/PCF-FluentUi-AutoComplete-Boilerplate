@@ -15,3 +15,5 @@
 /.vscode
 /Solution
 /test
+
+.env.dev

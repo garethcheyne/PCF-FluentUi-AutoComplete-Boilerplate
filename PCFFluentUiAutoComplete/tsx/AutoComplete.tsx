@@ -1,22 +1,30 @@
-import * as React from 'react';
-import * as moment from 'moment';
-import axios from 'axios';
-import { useDebounce, useIsFirstRender, useIsMounted } from 'usehooks-ts';
-import { IInputs } from "../generated/ManifestTypes";
-import { useState, useRef, useEffect, ChangeEvent } from 'react';
-import { FocusZone, FocusZoneDirection } from '@fluentui/react/lib/FocusZone';
-import { TooltipHost, ITooltipHostStyles } from '@fluentui/react/lib/Tooltip';
-import { IIconProps } from '@fluentui/react/lib/Icon';
-import { mergeStyleSets, getTheme, getFocusStyle, ITheme } from '@fluentui/react/lib/Styling';
-import { ActionButton } from '@fluentui/react/lib/Button';
-import { ThemeProvider, SearchBox, Stack, IStackTokens, Icon, FontWeights, DirectionalHint, TooltipDelay, Label } from '@fluentui/react';
-import { initializeIcons } from '@fluentui/react/lib/Icons';
-import { Spinner, SpinnerSize } from '@fluentui/react/lib/Spinner';
+import * as React from 'react'
+import * as moment from 'moment'
+import axios from 'axios'
+import { useDebounce } from 'usehooks-ts'
+import { IInputs } from '../generated/ManifestTypes'
+import { EntityDetailResponse, EntityDetailUtils } from '../types/EntityDetailTypes'
+import { EntityHoverCard } from './EntityHoverCard'
+import { useState, useRef, useEffect, ChangeEvent } from 'react'
+import { FocusZone, FocusZoneDirection } from '@fluentui/react/lib/FocusZone'
+import { TooltipHost, ITooltipHostStyles } from '@fluentui/react/lib/Tooltip'
+import { IIconProps } from '@fluentui/react/lib/Icon'
+import { mergeStyleSets, getTheme, getFocusStyle, ITheme } from '@fluentui/react/lib/Styling'
+import { ActionButton } from '@fluentui/react/lib/Button'
+import { ThemeProvider, SearchBox, Stack, IStackTokens, Icon, FontWeights, DirectionalHint, TooltipDelay, Label } from '@fluentui/react'
+import { initializeIcons } from '@fluentui/react/lib/Icons'
+import { Spinner, SpinnerSize } from '@fluentui/react/lib/Spinner'
 
 // Initialize icons in case this example uses them
-initializeIcons();
+initializeIcons()
 
-const stackTokens: Partial<IStackTokens> = { childrenGap: 0 };
+// Constants
+const DEBOUNCE_DELAY = 500;
+const MIN_SEARCH_LENGTH = 3;
+const MAX_DROPDOWN_HEIGHT = 420;
+const API_PAGE_SIZE = 35;
+
+const stackTokens: Partial<IStackTokens> = { childrenGap: 0 }
 
 // -------- Icons ----------------
 const searchIcon: IIconProps =
@@ -65,7 +73,7 @@ const style = mergeStyleSets({
         overflowY: 'scroll',
         msOverflowStyle: 'none',  /* IE and Edge */
         scrollbarWidth: 'none',
-        maxHeight: 420,
+        maxHeight: MAX_DROPDOWN_HEIGHT,
         padding: '2px',
         selectors: {
             '&::-webkit-scrollbar': {
@@ -140,7 +148,7 @@ const style = mergeStyleSets({
         selectors: {
             // '&:focus-within': {
             //     border: 'none',
-            //     clipPath: 'inset(cals(100% - 2px) 0px 0px)',
+            //     clipPath: 'inset(calc(100% - 2px) 0px 0px)',
             //     borderBottom: '2px solid rgb(15, 108, 189)',
             //     transform: 'scaleX(1)',
             //     transitionDelay: '0ms',
@@ -148,7 +156,7 @@ const style = mergeStyleSets({
             // },
             '&::after': {
                 border: 'none',
-                clipPath: 'inset(cals(100% - 2px) 0px 0px)',
+                clipPath: 'inset(calc(100% - 2px) 0px 0px)',
                 borderBottom: '2px solid rgb(15, 108, 189)',
                 transform: 'scaleX(1)',
                 transitionDelay: '2000ms',
@@ -179,7 +187,7 @@ const style = mergeStyleSets({
         display: 'block',
         marginTop: 20,
     },
-    // CSS for Focurs Items
+    // CSS for Focus Items
     itemContainer: [
 
         getFocusStyle(theme, { inset: -1 }),
@@ -215,7 +223,7 @@ const style = mergeStyleSets({
             fontWeight: 500,
             fontSize: 14,
             color: '#242424',
-            textAlign: 'Left',
+            textAlign: 'left',
             whiteSpace: 'nowrap',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
@@ -263,6 +271,23 @@ const iconToolTipStyle: Partial<ITooltipHostStyles> = {
     }
 };
 
+// TypeScript interfaces for better type safety
+interface TradingName {
+    name: string;
+}
+
+interface EntityItem {
+    nzbn: string;
+    entityName: string;
+    entityStatusDescription: string;
+    registrationDate: string;
+    tradingNames?: TradingName[];
+}
+
+interface ApiResponse {
+    items: EntityItem[];
+}
+
 export interface FluentUIAutoCompleteProps {
     context?: ComponentFramework.Context<IInputs>
     apiToken?: string;
@@ -272,123 +297,168 @@ export interface FluentUIAutoCompleteProps {
 }
 
 
-
-export const FluentUIAutoComplete: React.FunctionComponent<FluentUIAutoCompleteProps> = (props): JSX.Element => {
-
-    console.debug("PCF FluentUI AutoComplete - FluentUIAutoComplete Start")
-    console.debug("PCF FluentUI AutoComplete - props.context.parameters.value: ", props.value)
-
-
-    // For focusZone dropdown
+export const FluentUIAutoComplete: React.FC<FluentUIAutoCompleteProps> = (props) => {
     const [focusWidth, setFocusWidth] = useState<number>(0);
     const getInputWidth = () => {
-        let w = searchboxRef?.current?.offsetWidth
-        if (typeof w == 'number') {
-            w = w - 2
-            if (focusWidth != w) {
-                console.debug(`PCF FluentUI AutoComplete - getInputWidth w:${w}`)
-                setFocusWidth(w)
+        let w = searchboxRef?.current?.offsetWidth;
+        if (typeof w === 'number') {
+            w = w - 2;
+            if (focusWidth !== w) {
+                setFocusWidth(w);
             }
         }
-    }
+    };
 
-    // Section - Components for Search Function
-    // NB I have probably over complicated this, but the idea was to introduce a debounce 
-    // function to handel keyup and limit api calls to 500ms
-    const [value, setValue] = useState<string>(props.value || "");
-    const [suggestions, setSuggestions] = useState([])
-
-    const isLoading = useRef<boolean>(false);
+    const [value, setValue] = useState<string>(props.value || '');
+    const [suggestions, setSuggestions] = useState<EntityItem[]>([]);
+    const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [hoveredItem, setHoveredItem] = useState<EntityItem | null>(null);
+    const [hoverDetails, setHoverDetails] = useState<EntityDetailResponse | null>(null);
+    const [isLoadingHover, setIsLoadingHover] = useState<boolean>(false);
     const isSelected = useRef<boolean>(true);
     const searchboxRef = useRef<HTMLDivElement>(null);
-    const debouncedValue = useDebounce<string>(value, 500);
+    const hoverTimeoutRef = useRef<number | null>(null);
+    const debouncedValue = useDebounce<string>(value, DEBOUNCE_DELAY);
 
-    const handelSearch = (evt: ChangeEvent<HTMLInputElement> | undefined) => {
-        console.debug("PCF FluentUI AutoComplete - handelSearch value:", evt?.target.value)
-        if (evt != undefined) {
-            isLoading.current = true
-            isSelected.current = false
-            setValue(evt.target.value)
+    const handleSearch = (evt: ChangeEvent<HTMLInputElement> | undefined) => {
+        if (evt !== undefined) {
+            setIsLoading(true);
+            isSelected.current = false;
+            setValue(evt.target.value);
         }
-    }
+    };
 
     useEffect(() => {
-
-        console.debug("PCF FluentUI AutoComplete - useEffect")
-
         async function fetchSuggestions() {
+            try {
+                const uri = `https://api.business.govt.nz/gateway/nzbn/v5/entities?page-size=${API_PAGE_SIZE}&search-term=${encodeURI(
+                    debouncedValue.toLocaleLowerCase()
+                )}`;
 
-            let uri = `https://api.business.govt.nz/gateway/nzbn/v5/entities?page-size=35&search-term=${encodeURI(debouncedValue.toLocaleLowerCase())}`
+                const response = await axios.get<ApiResponse>(uri, {
+                    headers: {
+                        'Ocp-Apim-Subscription-Key': `${props.apiToken}`,
+                        'Cache-Control': 'no-cache',
+                    },
+                });
 
-            console.debug("PCF FluentUI AutoComplete - fetchSuggestions searching")
-
-            const response = await axios.get(uri, {
-                headers: {
-                    'Ocp-Apim-Subscription-Key': `${props.apiToken}`,
-                    'Cache-Control': 'no-cache',
+                if (response.status === 200) {
+                    console.log('API Response:', response.data.items);
+                    setIsLoading(false);
+                    setSuggestions(response.data.items);
                 }
-            })
-
-            if (response.status == 200) {
-                console.debug("PCF FluentUI AutoComplete - fetchSuggestions response: ", response.data.items)
-                isLoading.current = false
-                setSuggestions(response.data.items)
+            } catch (error) {
+                console.error('Error fetching suggestions:', error);
+                setIsLoading(false);
+                setSuggestions([]);
             }
         }
 
-        // Check that value is greater than 2 char before calling the api and does not match current value
-        if (isSelected.current == false && debouncedValue.length > 2) {
-            isLoading.current = true
-            setSuggestions([])
-            fetchSuggestions()
+        if (isSelected.current === false && debouncedValue.length > MIN_SEARCH_LENGTH) {
+            console.log('Fetching suggestions for:', debouncedValue);
+            setIsLoading(true);
+            setSuggestions([]);
+            fetchSuggestions();
+        } else {
+            console.log('Not fetching - isSelected:', isSelected.current, 'length:', debouncedValue.length);
+            setIsLoading(false);
+            setSuggestions([]);
         }
-        else {
-            isLoading.current = false
-            setSuggestions([])
 
-        }
-
-        // Check that containter has not changes size.
-        getInputWidth()
-
-    }, [debouncedValue, isLoading])
+        getInputWidth();
+    }, [debouncedValue, props.apiToken]);
 
     const onClear = () => {
-        console.debug("PCF FluentUI AutoComplete - getClear")
-        setValue("")
-        setSuggestions([])
+        setValue('');
+        setSuggestions([]);
+        props.updateValue('');
+    };
 
-        // Update the value in the parent component
-        props.updateValue("")
-    }
-
-    const onSelect = (item: any) => {
-        if (item != "" && item != undefined) {
-            console.debug("PCF FluentUI AutoComplete - getSelect")
-            isSelected.current = true
-            setValue(item.entityName)
-            getDetail(item.nzbn) // Get and Set full details of the NZBN entity
+    const onSelect = (item: EntityItem) => {
+        if (item !== null && item !== undefined) {
+            isSelected.current = true;
+            setValue(item.entityName);
+            getDetail(item.nzbn);
         }
-    }
+    };
+
+    const onItemHover = async (item: EntityItem) => {
+        // Clear any existing timeout
+        if (hoverTimeoutRef.current) {
+            clearTimeout(hoverTimeoutRef.current);
+        }
+
+        // Set a delay before making the API call
+        hoverTimeoutRef.current = window.setTimeout(async () => {
+            if (hoveredItem?.nzbn === item.nzbn && hoverDetails) return; // Already have details for this item
+
+            setHoveredItem(item);
+            setIsLoadingHover(true);
+            setHoverDetails(null);
+
+            try {
+                const uri = `https://api.business.govt.nz/gateway/nzbn/v5/entities/${item.nzbn}`;
+                const response = await axios.get<EntityDetailResponse>(uri, {
+                    headers: {
+                        'Ocp-Apim-Subscription-Key': `${props.apiToken}`,
+                        'Cache-Control': 'no-cache',
+                    },
+                });
+
+                if (response.status === 200) {
+                    setHoverDetails(response.data);
+                }
+            } catch (error) {
+                console.error('Error fetching hover details:', error);
+            } finally {
+                setIsLoadingHover(false);
+            }
+        }, 500); // Increased delay to 500ms for better UX
+    };
+
+    const onItemHoverLeave = () => {
+        // Clear the timeout if user leaves before delay
+        if (hoverTimeoutRef.current) {
+            clearTimeout(hoverTimeoutRef.current);
+            hoverTimeoutRef.current = null;
+        }
+
+        // Don't immediately hide the card - let the callout handle its own dismiss logic
+        // The callout will dismiss when mouse leaves both the target and the callout itself
+    };
+
+    const onCalloutDismiss = () => {
+        setHoveredItem(null);
+        setHoverDetails(null);
+        setIsLoadingHover(false);
+    };
 
     const openWebsite = (url: string) => {
-        window.open(url, "_blank")
-    }
+        window.open(url, '_blank');
+    };
 
-    const spinner = (): JSX.Element => {
+    const spinner = (): React.ReactElement => {
         return (
             <div className={style.focusZoneHeaderContent}>
-                <Spinner
-                    size={SpinnerSize.large}
-                    labelPosition="left"
-                    label="Waiting on results..." />
+                <Spinner size={SpinnerSize.large} labelPosition="left" label="Waiting on results..." />
             </div>
-        )
-    }
+        );
+    };
 
-    const renderDropdown = (item: any, index: number): JSX.Element => {
+    const renderHoverCard = (): React.ReactElement | null => {
+        return (
+            <EntityHoverCard
+                targetId={`suggestion_${suggestions.findIndex(s => s.nzbn === hoveredItem?.nzbn)}`}
+                hoveredItem={hoveredItem}
+                hoverDetails={hoverDetails}
+                isLoadingHover={isLoadingHover}
+                onDismiss={onCalloutDismiss}
+            />
+        );
+    };
 
-        const url = `https://www.nzbn.govt.nz/mynzbn/nzbndetails/${item.nzbn}`
+    const renderDropdown = (item: EntityItem, index: number): React.ReactElement => {
+        const url = `https://www.nzbn.govt.nz/mynzbn/nzbndetails/${item.nzbn}`;
         return (
             <div
                 id={`suggestion_${index}`}
@@ -396,21 +466,21 @@ export const FluentUIAutoComplete: React.FunctionComponent<FluentUIAutoCompleteP
                 className={style.itemContainer}
                 data-is-focusable={true}
                 onClick={() => onSelect(item)}
+                onMouseEnter={() => onItemHover(item)}
             >
-                {/* Item Content for FocusZone  */}
                 <div className={style.itemContent}>
                     <div className={style.itemHeader}>{item.entityName}</div>
                     <div className={style.itemDetail}>{`NZBN#  ${item.nzbn} `}</div>
-                    <div className={style.itemDetail}>{`Status: ${item.entityStatusDescription} Registered: ${(moment(item.registrationDate)).format('DD/MMM/YYYY')}`}</div>
+                    <div className={style.itemDetail}>{`Status: ${item.entityStatusDescription}`}</div>
 
-                    {item.tradingNames?.length > 0 &&
+                    {item.tradingNames && item.tradingNames.length > 0 && (
                         <div className={style.itemSection}>{`Trading Names`}</div>
-                    }
+                    )}
 
-                    {item.tradingNames?.length > 0 &&
-                        item.tradingNames.map((tradingName: any) =>
-                            <div className={style.itemDetail}>{` - ${tradingName.name}`}</div>
-                        )}
+                    {item.tradingNames && item.tradingNames.length > 0 &&
+                        item.tradingNames.map((tradingName: TradingName, tradingIndex: number) => (
+                            <div key={`trading-${index}-${tradingIndex}`} className={style.itemDetail}>{` - ${tradingName.name}`}</div>
+                        ))}
                 </div>
 
                 <TooltipHost
@@ -426,127 +496,99 @@ export const FluentUIAutoComplete: React.FunctionComponent<FluentUIAutoCompleteP
                         className={style.focusZoneWebIcon}
                         onClick={() => openWebsite(url)}
                         iconName={'Globe'}
-                    >
-                    </Icon>
+                    ></Icon>
                 </TooltipHost>
-                {/* End of Section */}
-            </div >
-        )
-    }
+            </div>
+        );
+    };
 
-    // ------------ API Call to get details of selected item
     const getDetail = (nzbn: string) => {
+        const uri = `https://api.business.govt.nz/gateway/nzbn/v5/entities/${nzbn}`;
 
-        // Get entity detail form the api.business.govt.nz service, and return the results. 
-        // this could be any api end point so change the below at reqired.
-
-        let uri = `https://api.business.govt.nz/gateway/nzbn/v5/entities/${nzbn}`
-
-        console.debug("PCF FluentUI AutoComplete - getDetail")
-
-        axios.get(uri, {
-            headers: {
-                'Ocp-Apim-Subscription-Key': `${props.apiToken}`,
-                'Cache-Control': 'no-cache',
-            }
-        }).then(
-            (response) => {
-
-                setSuggestions([])
-
-                // Update the value in the parent component
-                props.updateValue(response.data)
-
-
-            }
-        ).catch(err => {
-            console.error(err.message);
-        }
-        )
-    }
+        axios
+            .get<EntityDetailResponse>(uri, {
+                headers: {
+                    'Ocp-Apim-Subscription-Key': `${props.apiToken}`,
+                    'Cache-Control': 'no-cache',
+                },
+            })
+            .then(
+                (response) => {
+                    setSuggestions([]);
+                    props.updateValue(response.data);
+                }
+            )
+            .catch((err) => {
+                console.error(err.message);
+            });
+    };
 
     return (
         <div>
             <div ref={searchboxRef}>
                 <ThemeProvider>
-                    <Stack
-                        tokens={stackTokens}
-                        className={style.stackContainer}
-                    >
+                    <Stack tokens={stackTokens} className={style.stackContainer}>
                         <SearchBox
                             placeholder="---"
                             value={value}
-                            onChange={handelSearch}
+                            onChange={handleSearch}
                             iconProps={searchIcon}
                             onClear={onClear}
                             disabled={props.isDisabled}
                             className={style.searchBox}
                         ></SearchBox>
                     </Stack>
-                </ThemeProvider >
+                </ThemeProvider>
             </div>
 
-            {/* FocusZone Section/Dropdown */}
-
-            {suggestions.length > 0 &&
-
-                <FocusZone
-                    direction={FocusZoneDirection.vertical}
-                    className={style.focusZoneContainer}
-                    style={{ "width": focusWidth }}>
-
-                    {/* Header Section of Focus Zone */}
+            {(suggestions.length > 0 || isLoading) && (
+                <FocusZone direction={FocusZoneDirection.vertical} className={style.focusZoneContainer} style={{ width: focusWidth }}>
                     <div className={style.focusZoneHeader}>
-
-                        {!isLoading &&
+                        {!isLoading && (
                             <div className={style.focusZoneHeaderContent}>
                                 <Label>Search Results</Label>
                             </div>
-                        }
-
-                        {isLoading && spinner()}
-
-                    </div>
-                    {/* End of Section  */}
-
-                    {/* Suggestions Section of Focus Zone */}
-                    <div
-                        className={style.focusZoneContent}
-                        data-is-scrollable>
-
-                        {!isLoading && suggestions.map((suggestion, i) =>
-                            renderDropdown(suggestion, i)
                         )}
 
+                        {isLoading && spinner()}
                     </div>
-                    {/* End of Section  */}
 
-                    {/* Footer Section of Focus Zone */}
+                    <div className={style.focusZoneContent} data-is-scrollable>
+                        {!isLoading &&
+                            suggestions.map((suggestion, i) => renderDropdown(suggestion, i))}
+                    </div>
+
+
+
                     <div className={style.focusZoneFooter}>
                         <div className={style.focusZoneFooterLeft}>
-
-                            {/* You can change the below iconProps, href, and text to what ever applies for your purposes or comment this section 
-                            out completly if you do not wish to have footer buttons.*/}
-
                             <ActionButton
                                 className={style.focusZoneBtn}
                                 iconProps={dropBtnOne}
-                                href={`https://www.nzbn.govt.nz/mynzbn/search/${encodeURI(value)}/`} target="_blank">
-                                <Label>NZBN Website</Label></ActionButton>
+                                href={`https://www.nzbn.govt.nz/mynzbn/search/${encodeURI(value)}/`}
+                                target="_blank"
+                            >
+                                <Label>NZBN Website</Label>
+                            </ActionButton>
                         </div>
 
                         <div className={style.focusZoneFooterRight}>
                             <ActionButton
                                 className={style.focusZoneBtn}
                                 iconProps={dropBtnTwo}
-                                href={`https://app.companiesoffice.govt.nz/companies/app/ui/pages/companies/search?q=${encodeURI(value)}&entityTypes=ALL&entityStatusGroups=ALL&incorpFrom=&incorpTo=&addressTypes=ALL&addressKeyword=&start=0&limit=15&sf=&sd=&advancedPanel=false&mode=standard#results`} target="_blank">
-                                <Label>Companies Website</Label></ActionButton>
+                                href={`https://app.companiesoffice.govt.nz/companies/app/ui/pages/companies/search?q=${encodeURI(
+                                    value
+                                )}&entityTypes=ALL&entityStatusGroups=ALL&incorpFrom=&incorpTo=&addressTypes=ALL&addressKeyword=&start=0&limit=15&sf=&sd=&advancedPanel=false&mode=standard#results`}
+                                target="_blank"
+                            >
+                                <Label>Companies Website</Label>
+                            </ActionButton>
                         </div>
-                        {/* End of Section */}
                     </div>
-                    {/* End of Section  */}
                 </FocusZone>
-            }
+            )}
+
+            {renderHoverCard()}
         </div>
     );
-}
+};
